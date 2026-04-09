@@ -1,60 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pageTitle ?? 'Admin Dashboard' }}</title>
+    <title>@yield('title', 'GauMitra Admin Panel')</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @include('admin.layouts.components.styles')
 </head>
-
 <body>
+    <div class="admin-wrapper" id="adminWrapper">
+        @include('admin.layouts.components.app-sidebar')
 
-    <div class="main-wrapper">
+        <div class="main-content">
+            @include('admin.layouts.components.app-header')
 
-        @include('admin.layouts.components.app-header')
-
-        <div class="layout-body">
-            @include('admin.layouts.components.app-sidebar')
-
-            <main class="content-area">
+            <div class="content-body">
                 @yield('content')
-            </main>
+            </div>
+
+            @include('admin.layouts.components.footer')
         </div>
-
-        @include('admin.layouts.components.footer')
-
     </div>
 
-    @include('admin.layouts.components.sidebar-right')
-    @include('admin.layouts.components.modal')
-    @yield('modal')
-
     @include('admin.layouts.components.scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    @if (session('success'))
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: "{{ session('success') }}",
-                timer: 2000,
-                showConfirmButton: false
-            });
-        </script>
-    @endif
-
-    @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: "{{ session('error') }}"
-            });
-        </script>
-    @endif
 </body>
-
 </html>
