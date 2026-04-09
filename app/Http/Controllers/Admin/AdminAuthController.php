@@ -23,14 +23,25 @@ class AdminAuthController extends Controller
         $request->validate([
             'user_id' => 'required|string',
             'password' => 'required|string',
+        ], [
+            'user_id.required' => 'User ID is required',
+            'password.required' => 'Password is required',
         ]);
 
         $admin = AdminUser::where('user_id', $request->user_id)
             ->where('status', 1)
             ->first();
 
-        if (!$admin || !Hash::check($request->password, $admin->password)) {
-            return back()->with('error', 'Invalid user ID or password')->withInput();
+        if (!$admin) {
+            return back()
+                ->with('error', 'User not found or inactive')
+                ->withInput();
+        }
+
+        if (!Hash::check($request->password, $admin->password)) {
+            return back()
+                ->with('error', 'Invalid password')
+                ->withInput();
         }
 
         $request->session()->regenerate();
@@ -41,7 +52,9 @@ class AdminAuthController extends Controller
             'admin_user_id' => $admin->user_id,
         ]);
 
-        return redirect()->route('admin.dashboard');
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('success', 'Login successful');
     }
 
     public function logout(Request $request)

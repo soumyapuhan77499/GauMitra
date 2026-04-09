@@ -10,13 +10,10 @@ Route::get('/', function () {
 })->name('home');
 
 Route::prefix('admin')->group(function () {
-    Route::get('/', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+    Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
     Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
-
-    Route::middleware('admin.auth')->group(function () {
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-    });
+    Route::get('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });
 
 Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->group(function () {
