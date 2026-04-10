@@ -9,6 +9,8 @@ class LoginOtp extends Model
 {
     use HasFactory;
 
+    protected $table = 'login_otps';
+
     protected $fillable = [
         'user_id',
         'mobile',
