@@ -20,7 +20,8 @@
         </li>
 
         <li>
-            <a href="javascript:void(0)">
+            <a href="{{ route('admin.users.index') }}"
+                class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i>
                 <span>Users</span>
             </a>

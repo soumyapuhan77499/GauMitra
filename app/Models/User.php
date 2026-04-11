@@ -42,4 +42,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAddress::class);
     }
+
+    public function latestAddress()
+    {
+        return $this->hasOne(UserAddress::class)->latestOfMany();
+    }
 }
