@@ -3,17 +3,30 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class UserAddressController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->only(['store']);
+    }
+
     public function store(Request $request)
     {
+        $user = Auth::guard('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         $validator = Validator::make($request->all(), [
-            'user_id'          => 'required|exists:users,id',
             'full_address'     => 'required|string',
             'street'           => 'nullable|string|max:255',
             'village'          => 'nullable|string|max:150',
@@ -28,8 +41,6 @@ class UserAddressController extends Controller
             'google_place_id'  => 'nullable|string|max:255',
             'plus_code'        => 'nullable|string|max:100',
         ], [
-            'user_id.required'      => 'User ID is required.',
-            'user_id.exists'        => 'Selected user does not exist.',
             'full_address.required' => 'Full address is required.',
             'latitude.required'     => 'Latitude is required.',
             'longitude.required'    => 'Longitude is required.',
@@ -44,7 +55,7 @@ class UserAddressController extends Controller
         }
 
         $address = UserAddress::create([
-            'user_id'         => $request->user_id,
+            'user_id'         => $user->id,
             'full_address'    => $request->full_address,
             'street'          => $request->street,
             'village'         => $request->village,
