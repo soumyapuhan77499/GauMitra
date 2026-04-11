@@ -92,123 +92,106 @@ class AuthController extends Controller
         }
     }
 
-    public function verifyOtp(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'mobile' => 'required|digits:10',
-                'otp'    => 'required|digits:4',
-            ], [
-                'mobile.required' => 'Mobile number is required',
-                'mobile.digits'   => 'Mobile number must be 10 digits',
-                'otp.required'    => 'OTP is required',
-                'otp.digits'      => 'OTP must be 4 digits',
-            ]);
+public function verifyOtp(Request $request)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|digits:10',
+            'otp'    => 'required|digits:4',
+        ], [
+            'mobile.required' => 'Mobile number is required',
+            'mobile.digits'   => 'Mobile number must be 10 digits',
+            'otp.required'    => 'OTP is required',
+            'otp.digits'      => 'OTP must be 4 digits',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => $validator->errors()->first(),
-                    'errors'  => $validator->errors(),
-                ], 422);
-            }
-
-            $loginOtp = LoginOtp::where('mobile', $request->mobile)
-                ->where('purpose', 'login')
-                ->where('otp_hash', $request->otp)
-                ->where('is_used', 0)
-                ->latest()
-                ->first();
-
-            if (!$loginOtp) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Invalid OTP',
-                ], 401);
-            }
-
-            if (!empty($loginOtp->expires_at) && Carbon::parse($loginOtp->expires_at)->isPast()) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'OTP expired',
-                ], 401);
-            }
-
-            $user = User::where('mobile', $request->mobile)->first();
-            $isNewUser = false;
-
-            if ($user && $user->status !== 'active') {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'User exists but is inactive',
-                ], 403);
-            }
-
-            // New user flow
-            if (!$user) {
-                $nameValidator = Validator::make($request->all(), [
-                    'name' => 'required|string|max:255',
-                ], [
-                    'name.required' => 'Name is required for new user',
-                    'name.string'   => 'Name must be a string',
-                    'name.max'      => 'Name may not be greater than 255 characters',
-                ]);
-
-                if ($nameValidator->fails()) {
-                    return response()->json([
-                        'status'  => false,
-                        'message' => $nameValidator->errors()->first(),
-                        'errors'  => $nameValidator->errors(),
-                    ], 422);
-                }
-
-                $user = User::create([
-                    'name'               => $request->name,
-                    'mobile'             => $request->mobile,
-                    'status'             => 'active',
-                    'mobile_verified_at' => now(),
-                    'last_login_at'      => now(),
-                ]);
-
-                $isNewUser = true;
-                $message = 'New user registered and login successful';
-            } else {
-                // Old user flow
-                $user->update([
-                    'mobile_verified_at' => now(),
-                    'last_login_at'      => now(),
-                ]);
-
-                $message = 'Login successful';
-            }
-
-            // Mark OTP used and attach user_id if it was null
-            $loginOtp->update([
-                'user_id'     => $user->id,
-                'is_used'     => 1,
-                'verified_at' => now(),
-            ]);
-
-            $token = $user->createToken('mobile-login-token')->plainTextToken;
-
-            return response()->json([
-                'status'      => true,
-                'message'     => $message,
-                'is_new_user' => $isNewUser,
-                'token'       => $token,
-                'token_type'  => 'Bearer',
-                'user'        => $user,
-            ]);
-        } catch (\Exception $e) {
+        if ($validator->fails()) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Server error',
-                'error'   => $e->getMessage(),
-                'line'    => $e->getLine(),
-                'file'    => $e->getFile(),
-            ], 500);
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
         }
+
+        $loginOtp = LoginOtp::where('mobile', $request->mobile)
+            ->where('purpose', 'login')
+            ->where('otp_hash', $request->otp)
+            ->where('is_used', 0)
+            ->latest()
+            ->first();
+
+        if (!$loginOtp) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid OTP',
+            ], 401);
+        }
+
+        if (!empty($loginOtp->expires_at) && Carbon::parse($loginOtp->expires_at)->isPast()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'OTP expired',
+            ], 401);
+        }
+
+        $user = User::where('mobile', $request->mobile)->first();
+        $isNewUser = false;
+
+        if ($user && $user->status !== 'active') {
+            return response()->json([
+                'status'  => false,
+                'message' => 'User exists but is inactive',
+            ], 403);
+        }
+
+        // New user flow
+        if (!$user) {
+            $user = User::create([
+                'mobile'             => $request->mobile,
+                'status'             => 'active',
+                'mobile_verified_at' => now(),
+                'last_login_at'      => now(),
+            ]);
+
+            $isNewUser = true;
+            $message = 'New user registered and login successful';
+        } else {
+            // Old user flow
+            $user->update([
+                'mobile_verified_at' => now(),
+                'last_login_at'      => now(),
+            ]);
+
+            $message = 'Login successful';
+        }
+
+        // Mark OTP used and attach user_id if it was null
+        $loginOtp->update([
+            'user_id'     => $user->id,
+            'is_used'     => 1,
+            'verified_at' => now(),
+        ]);
+
+        $token = $user->createToken('mobile-login-token')->plainTextToken;
+
+        return response()->json([
+            'status'      => true,
+            'message'     => $message,
+            'is_new_user' => $isNewUser,
+            'token'       => $token,
+            'token_type'  => 'Bearer',
+            'user'        => $user,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Server error',
+            'error'   => $e->getMessage(),
+            'line'    => $e->getLine(),
+            'file'    => $e->getFile(),
+        ], 500);
     }
+}
 
     public function logout(Request $request)
     {
