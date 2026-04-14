@@ -28,6 +28,14 @@
         </li>
 
         <li>
+            <a href="{{ route('admin.gaushalas.index') }}"
+                class="{{ request()->routeIs('admin.gaushalas.*') ? 'active' : '' }}">
+                <i class="bi bi-house-heart-fill"></i>
+                <span>Gaushalas</span>
+            </a>
+        </li>
+
+        <li>
             <a href="javascript:void(0)">
                 <i class="bi bi-clipboard-data-fill"></i>
                 <span>Reports</span>
